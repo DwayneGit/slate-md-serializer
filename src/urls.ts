@@ -1,5 +1,5 @@
 // to ensure markdown compatability we need to specifically encode some characters
-export function encode(href) {
+export function encode(href: string) {
   return decodeSafe(href)
     .trim()
     .replace(/ /g, "%20")
@@ -18,10 +18,10 @@ export function decode(href: string) {
 
 // convert hanging % characters into percentage encoded %25 as decodeURI cannot
 // handle this scenario but users may input 'invalid' urls.
-function decodeSafe(uri) {
+function decodeSafe(uri: string) {
   const components = uri.split(/(%(?:d0|d1)%.{2})/);
   return components
-    .map(component => {
+    .map((component) => {
       try {
         return decodeURIComponent(component);
       } catch (e) {

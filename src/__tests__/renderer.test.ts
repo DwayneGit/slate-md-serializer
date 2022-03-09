@@ -3,7 +3,7 @@ const Markdown = new MarkdownRenderer();
 
 // By parsing, rendering and reparsing we can test both sides of the serializer
 // at the same time and ensure that parsing / rendering is compatible.
-function getNodes(text) {
+function getNodes(text: string) {
   const parsed = Markdown.deserialize(text);
   const rendered = Markdown.serialize(parsed);
   const reparsed = Markdown.deserialize(rendered);
@@ -538,7 +538,7 @@ test("handles escaped marks", () => {
 
 // document version 2
 
-function getVersion2(text) {
+function getVersion2(text: string) {
   const parsed = Markdown.deserialize(text);
   return Markdown.serialize(parsed, { version: 2 });
 }

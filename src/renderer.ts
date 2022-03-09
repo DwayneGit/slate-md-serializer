@@ -4,9 +4,9 @@ import { Record } from "immutable";
 import { encode } from "./urls";
 import { escapeMarkdownChars } from "./utils";
 
-const String = new Record({
+const String = Record({
   object: "string",
-  text: ""
+  text: "",
 });
 
 /**
@@ -17,9 +17,9 @@ const String = new Record({
 
 let tableHeader = "";
 let firstRow = true;
-let version;
-let previousBlock;
-let currentBlock;
+let version: number;
+let previousBlock: { obj: { type: string }; children: string } | undefined;
+let currentBlock: { obj: { type: string }; children: string } | undefined;
 
 const RULES = [
   {
@@ -27,7 +27,7 @@ const RULES = [
       if (obj.object === "string") {
         return children;
       }
-    }
+    },
   },
   {
     serialize(obj, children, document) {
@@ -40,7 +40,7 @@ const RULES = [
 
       currentBlock = {
         obj,
-        children
+        children,
       };
 
       switch (obj.type) {
@@ -107,7 +107,10 @@ const RULES = [
           return `${children}\n`;
         case "block-quote":
           // Handle multi-line blockquotes
-          return children.split("\n").map(text => `> ${text}`).join("\n");
+          return children
+            .split("\n")
+            .map((text: string) => `> ${text}`)
+            .join("\n");
         case "todo-list":
         case "bulleted-list":
         case "ordered-list": {
@@ -155,12 +158,12 @@ const RULES = [
           const src = encode(obj.getIn(["data", "src"]) || "");
           return `![${alt}](${src})`;
       }
-    }
+    },
   },
   {
     serialize(obj, children) {
       if (obj.type === "hashtag") return children;
-    }
+    },
   },
   {
     serialize(obj, children) {
@@ -169,7 +172,7 @@ const RULES = [
         const text = children.trim() || href;
         return href ? `[${text}](${href})` : text;
       }
-    }
+    },
   },
   {
     serialize(obj, children) {
@@ -218,8 +221,8 @@ const RULES = [
         case "underlined":
           return `__${children}__`;
       }
-    }
-  }
+    },
+  },
 ];
 
 /**
@@ -260,7 +263,7 @@ class Markdown {
     previousBlock = undefined;
 
     const { document } = state;
-    const elements = document.nodes.map(node =>
+    const elements = document.nodes.map((node) =>
       this.serializeNode(node, document)
     );
 
@@ -293,23 +296,23 @@ class Markdown {
    * @return {String}
    */
 
-  serializeNode(node, document) {
+  serializeNode(node: Node, document) {
     if (node.object == "text") {
       const leaves = node.getLeaves();
       const inCodeBlock = !!document.getClosest(
         node.key,
-        n => n.type === "code"
+        (n) => n.type === "code"
       );
 
-      return leaves.map(leave => {
-        const inCodeMark = !!leave.marks.filter(mark => mark.type === "code")
+      return leaves.map((leave) => {
+        const inCodeMark = !!leave.marks.filter((mark) => mark.type === "code")
           .size;
         return this.serializeLeaves(leave, !inCodeBlock && !inCodeMark);
       });
     }
 
     const children = node.nodes
-      .map(childNode => {
+      .map((childNode) => {
         const serialized = this.serializeNode(childNode, document);
         return (
           (serialized && serialized.join ? serialized.join("") : serialized) ||
@@ -335,7 +338,10 @@ class Markdown {
    * @return {String}
    */
 
-  serializeLeaves(leaves, escape = true) {
+  serializeLeaves(
+    leaves: { text: string; marks: any[] }[],
+    escape: boolean = true
+  ) {
     let leavesText = leaves.text;
     if (escape) {
       // escape markdown characters
@@ -360,10 +366,10 @@ class Markdown {
    * @return {String}
    */
 
-  serializeString(string) {
+  serializeString(str: string) {
     for (const rule of this.rules) {
       if (!rule.serialize) continue;
-      const ret = rule.serialize(string, string.text);
+      const ret = rule.serialize(str, str.text);
       if (ret) return ret;
     }
   }
@@ -374,7 +380,7 @@ class Markdown {
    * @param {String} markdown
    * @return {State} state
    */
-  deserialize(markdown) {
+  deserialize(markdown: string) {
     const document = parser.parse(markdown);
     return Value.fromJSON({ document });
   }
